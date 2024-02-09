@@ -1,20 +1,18 @@
-# Start with a base image containing Java runtime
-FROM amazoncorretto:17
-
-# Add Maintainer Info
-LABEL maintainer="navalgaikwad@example.com"
-
-# Add a volume pointing to /tmp
-VOLUME /tmp
-
-# Make port 8080 available to the world outside this container
-EXPOSE 8080
-
-# The application's jar file
-ARG JAR_FILE=target/card-deck-service-0.0.1-SNAPSHOT.jar
-
-# Add the application's jar to the container
-ADD ${JAR_FILE} /card-deck-service-0.0.1-SNAPSHOT.jar
-
 # Run the jar file
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/card-deck-service-0.0.1-SNAPSHOT.jar"]
+
+#
+# Build stage
+#
+FROM maven:3.8.2-amazoncorretto:17 AS build
+COPY . .
+RUN mvn clean package -Pprod -DskipTests
+
+#
+# Package stage
+#
+FROM amazoncorretto:17
+COPY --from=build /target/card-deck-service-0.0.1-SNAPSHOT.jar demo.jar
+# ENV PORT=8080
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","demo.jar"]
